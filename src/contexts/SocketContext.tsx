@@ -15,7 +15,8 @@ interface SocketContextType {
   createRoom: (playerName: string) => void;
   joinRoom: (roomId: string, playerName: string) => void;
   startGame: (roomId: string) => void;
-  submitWord: (roomId: string, word: string) => void;
+  selectLetter: (roomId: string, letter: string) => void;
+  passTurn: (roomId: string) => void;
   room: Room | null;
   player: Player | null;
   error: string | null;
@@ -28,7 +29,8 @@ const SocketContext = createContext<SocketContextType>({
   createRoom: () => {},
   joinRoom: () => {},
   startGame: () => {},
-  submitWord: () => {},
+  selectLetter: () => {},
+  passTurn: () => {},
   room: null,
   player: null,
   error: null,
@@ -113,7 +115,21 @@ export function SocketProvider({ children }: { children: ReactNode }) {
             currentTheme: data.theme,
             activePlayerId: data.activePlayerId,
             letters: data.letters,
+            usedLetters: [],
             currentTurnStartTime: Date.now(),
+          };
+        });
+      }
+    );
+
+    socketInstance.on(
+      'letter-selected',
+      (data: { playerId: string; letter: string }) => {
+        setRoom((prev) => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            selectedLetter: data.letter,
           };
         });
       }
@@ -124,21 +140,31 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       (data: {
         previousPlayerId: string;
         activePlayerId: string;
-        submittedWord: string;
+        usedLetter: string;
       }) => {
         setRoom((prev) => {
           if (!prev) return null;
+          const newUsedLetters = [...prev.usedLetters, data.usedLetter];
           return {
             ...prev,
             activePlayerId: data.activePlayerId,
             currentTurnStartTime: Date.now(),
+            usedLetters: newUsedLetters,
+            selectedLetter: null,
           };
         });
       }
     );
 
-    socketInstance.on('player-lost', () => {
-      // Just show this as a notification - we'll implement this in the UI components
+    socketInstance.on('player-lost', (data: { playerId: string }) => {
+      setRoom((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          gameOver: true,
+          loser: data.playerId,
+        };
+      });
     });
 
     socketInstance.on(
@@ -150,6 +176,10 @@ export function SocketProvider({ children }: { children: ReactNode }) {
             ...prev,
             currentTheme: data.theme,
             letters: data.letters,
+            usedLetters: [],
+            gameOver: false,
+            loser: undefined,
+            selectedLetter: null,
           };
         });
       }
@@ -179,9 +209,14 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     socket.emit('start-game', { roomId });
   };
 
-  const submitWord = (roomId: string, word: string) => {
+  const selectLetter = (roomId: string, letter: string) => {
     if (!socket) return;
-    socket.emit('submit-word', { roomId, word });
+    socket.emit('select-letter', { roomId, letter });
+  };
+
+  const passTurn = (roomId: string) => {
+    if (!socket) return;
+    socket.emit('pass-turn', { roomId });
   };
 
   return (
@@ -191,7 +226,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         createRoom,
         joinRoom,
         startGame,
-        submitWord,
+        selectLetter,
+        passTurn,
         room,
         player,
         error,

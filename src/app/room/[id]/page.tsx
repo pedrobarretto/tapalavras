@@ -7,7 +7,6 @@ import { LetterCircle } from '@/components/LetterCircle';
 import { ThemeCard } from '@/components/ThemeCard';
 import { PlayerList } from '@/components/PlayerList';
 import { TurnTimer } from '@/components/TurnTimer';
-import { WordInput } from '@/components/WordInput';
 import { Button } from '@/components/ui/button';
 import { useSocket } from '@/contexts/SocketContext';
 
@@ -23,7 +22,8 @@ export default function GameRoom() {
     createRoom,
     joinRoom,
     startGame,
-    submitWord,
+    selectLetter,
+    passTurn,
     room,
     player,
     error,
@@ -46,19 +46,27 @@ export default function GameRoom() {
     }
 
     setIsReady(true);
-  }, [roomId, playerName, socket, isHost]); // Removed createRoom and joinRoom from dependencies
+  }, [roomId, playerName, socket, isHost]);
 
   const handleStartGame = () => {
     if (!room?.id) return;
     startGame(room.id);
   };
 
-  const handleSubmitWord = (word: string) => {
-    if (!room?.id) return;
-    submitWord(room.id, word);
+  const handleLetterSelect = (letter: string) => {
+    if (!room?.id || !isPlayersTurn) return;
+    selectLetter(room.id, letter);
+  };
+
+  const handlePassTurn = () => {
+    if (!room?.id || !isPlayersTurn || !room.selectedLetter) return;
+    passTurn(room.id);
   };
 
   const isPlayersTurn = player?.id === room?.activePlayerId;
+  const playerLost = room?.gameOver && room?.loser === player?.id;
+  const isGameOver = room?.gameOver;
+  const noMoreLetters = room?.letters?.length === room?.usedLetters?.length;
 
   if (error) {
     return (
@@ -96,21 +104,23 @@ export default function GameRoom() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-100 p-6">
+    <div className="min-h-screen bg-[#fffffd] p-4 sm:p-6">
       <div className="max-w-4xl mx-auto">
-        <header className="flex flex-col md:flex-row md:items-center justify-between mb-6">
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">TapaPalavras</h1>
-            <div className="bg-white px-3 py-1 rounded-md shadow-sm mt-2 inline-block">
-              <span className="text-gray-600 mr-2">Room Code:</span>
-              <span className="font-bold text-indigo-600">{room.id}</span>
+            <h1 className="text-2xl sm:text-3xl font-bold text-[#1f2a28]">
+              TapaPalavras
+            </h1>
+            <div className="bg-[#2c5ba7] px-3 py-1 rounded-md shadow-sm mt-2 inline-block">
+              <span className="text-[#fffffd] mr-2">Room Code:</span>
+              <span className="font-bold text-[#fdc11d]">{room.id}</span>
             </div>
           </div>
 
           {player.isHost && !room.currentTheme && (
             <Button
               onClick={handleStartGame}
-              className="mt-4 md:mt-0"
+              className="mt-4 sm:mt-0 bg-[#2c5ba7] text-[#fffffd] hover:bg-[#2c5ba7]/90"
               disabled={room.players.length < 2}
             >
               {room.players.length < 2
@@ -120,40 +130,98 @@ export default function GameRoom() {
           )}
         </header>
 
-        <div className="grid md:grid-cols-2 gap-6">
-          <div>
+        <div className="flex flex-col items-center">
+          {/* Game circle is central */}
+          <div className="mb-8 mt-4 flex justify-center">
+            {room.letters && room.letters.length > 0 ? (
+              <LetterCircle
+                letters={room.letters}
+                usedLetters={room.usedLetters || []}
+                isPlayerTurn={isPlayersTurn && !isGameOver}
+                selectedLetter={room.selectedLetter || null}
+                onLetterSelect={handleLetterSelect}
+                onPassTurn={handlePassTurn}
+              />
+            ) : (
+              <div className="bg-[#fdc11d] rounded-full w-[300px] h-[300px] sm:w-[340px] sm:h-[340px] md:w-[380px] md:h-[380px] flex items-center justify-center text-[#1f2a28] font-semibold">
+                <p className="text-center px-4">Waiting for game to start...</p>
+              </div>
+            )}
+          </div>
+
+          <div className="w-full max-w-lg mx-auto grid grid-cols-1 gap-4 sm:gap-6">
+            {room.currentTheme && <ThemeCard theme={room.currentTheme} />}
+
             <PlayerList
               players={room.players}
               activePlayerId={room.activePlayerId}
               currentPlayerId={player.id}
+              loserId={room.loser}
             />
 
-            {room.currentTheme && (
-              <>
-                <ThemeCard theme={room.currentTheme} />
-
-                {room.activePlayerId && room.currentTurnStartTime && (
+            {room.currentTheme &&
+              room.activePlayerId &&
+              room.currentTurnStartTime &&
+              !isGameOver && (
+                <div className="bg-[#fffffd] shadow-md rounded-lg p-3 sm:p-4 border border-[#2c5ba7]/20">
                   <TurnTimer
                     startTime={room.currentTurnStartTime}
                     timeLimit={room.timeLimit}
                     isActive={isPlayersTurn}
                   />
+
+                  {isPlayersTurn && (
+                    <div className="mt-3 sm:mt-4 bg-[#1f2a28] p-2 sm:p-3 rounded-md text-center">
+                      {!room.selectedLetter ? (
+                        <p className="text-[#fdc11d] font-bold text-sm sm:text-base">
+                          Choose a letter!
+                        </p>
+                      ) : (
+                        <p className="text-[#fdc11d] font-bold text-sm sm:text-base">
+                          Say a word and click the center button!
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+            {isGameOver && (
+              <div
+                className={`shadow-md rounded-lg p-3 sm:p-4 text-center ${
+                  playerLost ? 'bg-[#1f2a28]' : 'bg-[#2c5ba7]'
+                }`}
+              >
+                {playerLost ? (
+                  <p className="text-[#fdc11d] text-lg sm:text-xl font-bold">
+                    You lost the game!
+                  </p>
+                ) : (
+                  <>
+                    <p className="text-[#fffffd] text-lg sm:text-xl font-bold">
+                      Game Over!
+                    </p>
+                    <p className="text-[#fdc11d] mt-2">
+                      {noMoreLetters
+                        ? 'No more letters available!'
+                        : 'Player ran out of time!'}
+                    </p>
+                    <p className="text-[#fffffd] mt-2">
+                      {room.players.find((p) => p.id === room.loser)?.name ||
+                        'Someone'}{' '}
+                      lost.
+                    </p>
+                  </>
                 )}
 
-                <WordInput
-                  onSubmit={handleSubmitWord}
-                  isActive={isPlayersTurn}
-                />
-              </>
-            )}
-          </div>
-
-          <div className="flex items-center justify-center">
-            {room.letters && room.letters.length > 0 ? (
-              <LetterCircle letters={room.letters} />
-            ) : (
-              <div className="bg-gray-100 rounded-full w-[300px] h-[300px] flex items-center justify-center text-gray-400">
-                Waiting for game to start...
+                {player.isHost && (
+                  <Button
+                    onClick={handleStartGame}
+                    className="mt-3 sm:mt-4 bg-[#fdc11d] text-[#1f2a28] hover:bg-[#fdc11d]/80"
+                  >
+                    Start New Game
+                  </Button>
+                )}
               </div>
             )}
           </div>

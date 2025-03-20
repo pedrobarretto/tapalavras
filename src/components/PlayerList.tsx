@@ -5,47 +5,63 @@ interface PlayerListProps {
   players: Player[];
   activePlayerId?: string;
   currentPlayerId?: string;
+  loserId?: string;
 }
 
 export function PlayerList({
   players,
   activePlayerId,
   currentPlayerId,
+  loserId,
 }: PlayerListProps) {
   return (
-    <div className="w-full max-w-sm mx-auto bg-white shadow-md rounded-lg overflow-hidden mb-4">
-      <div className="px-4 py-2 bg-gray-800 text-white">
-        <h3 className="text-lg font-semibold">Players</h3>
+    <div className="w-full max-w-sm mx-auto bg-[#fffffd] shadow-md rounded-lg overflow-hidden mb-4">
+      <div className="px-4 py-2 bg-[#2c5ba7] text-[#fffffd]">
+        <h3 className="text-md sm:text-lg font-semibold">Players</h3>
       </div>
-      <ul className="divide-y divide-gray-200">
+      <ul className="divide-y divide-[#fdc11d]/30 text-sm sm:text-base">
         {players.map((player) => {
           const isActive = player.id === activePlayerId;
           const isCurrentPlayer = player.id === currentPlayerId;
+          const isLoser = player.id === loserId;
 
           return (
             <li
               key={player.id}
-              className={`px-4 py-3 flex items-center ${
-                isActive ? 'bg-indigo-50' : ''
-              }`}
+              className={`px-3 sm:px-4 py-2 sm:py-3 flex items-center ${
+                isActive ? 'bg-[#fdc11d]/20' : ''
+              } ${isLoser ? 'bg-[#1f2a28]/20' : ''}`}
             >
               <div
-                className={`w-3 h-3 rounded-full mr-3 ${
-                  isActive ? 'bg-green-500' : 'bg-gray-300'
+                className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full mr-2 sm:mr-3 ${
+                  isActive
+                    ? 'bg-[#fdc11d]'
+                    : isLoser
+                    ? 'bg-[#1f2a28]'
+                    : 'bg-[#1f2a28]/30'
                 }`}
               />
-              <span className="flex-1">
+              <span className="flex-1 text-[#1f2a28]">
                 {player.name}
                 {player.isHost && (
-                  <span className="ml-2 text-xs text-gray-500">(Host)</span>
+                  <span className="ml-1 sm:ml-2 text-xs text-[#2c5ba7]">
+                    (Host)
+                  </span>
                 )}
                 {isCurrentPlayer && (
-                  <span className="ml-2 text-xs text-blue-500">(You)</span>
+                  <span className="ml-1 sm:ml-2 text-xs text-[#2c5ba7] font-bold">
+                    (You)
+                  </span>
                 )}
               </span>
-              {isActive && (
-                <span className="text-xs font-medium text-green-600">
+              {isActive && !isLoser && (
+                <span className="text-xs font-medium text-[#fdc11d] bg-[#1f2a28] px-2 py-1 rounded-full">
                   Current Turn
+                </span>
+              )}
+              {isLoser && (
+                <span className="text-xs font-medium text-[#fdc11d] bg-[#1f2a28] px-2 py-1 rounded-full">
+                  Lost
                 </span>
               )}
             </li>

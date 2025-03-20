@@ -24,8 +24,8 @@ export function WordInput({ onSubmit, isActive }: WordInputProps) {
 
   if (!isActive) {
     return (
-      <div className="w-full max-w-sm mx-auto p-4 bg-gray-100 rounded-lg border border-gray-200 mt-4">
-        <p className="text-center text-gray-500">Wait for your turn...</p>
+      <div className="w-full max-w-sm mx-auto p-4 bg-[#2c5ba7]/10 rounded-lg border border-[#2c5ba7]/20 mt-4">
+        <p className="text-center text-[#1f2a28]">Wait for your turn...</p>
       </div>
     );
   }
@@ -39,13 +39,16 @@ export function WordInput({ onSubmit, isActive }: WordInputProps) {
           onChange={handleChange}
           placeholder="Enter a word..."
           autoFocus
-          className="flex-1"
+          className="flex-1 border-[#2c5ba7] focus-visible:ring-[#fdc11d]"
         />
-        <Button type="submit" variant="default">
+        <Button
+          type="submit"
+          className="bg-[#2c5ba7] text-[#fffffd] hover:bg-[#2c5ba7]/90"
+        >
           Submit
         </Button>
       </div>
-      <p className="text-center mt-2 text-sm font-semibold text-green-600">
+      <p className="text-center mt-2 text-sm font-semibold text-[#fdc11d] bg-[#1f2a28] py-1 px-2 rounded-md">
         Your turn! Enter a word using the letters above.
       </p>
     </form>

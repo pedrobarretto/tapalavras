@@ -9,9 +9,13 @@ export interface Room {
   players: Player[];
   currentTheme?: string;
   letters: string[];
+  usedLetters: string[];
+  selectedLetter?: string | null;
   activePlayerId?: string;
   currentTurnStartTime?: number;
   timeLimit: number;
+  gameOver?: boolean;
+  loser?: string;
 }
 
 export interface GameState {

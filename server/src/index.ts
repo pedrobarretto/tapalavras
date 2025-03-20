@@ -16,6 +16,8 @@ interface Room {
   players: Player[];
   currentTheme?: string;
   letters: string[];
+  usedLetters: string[];
+  selectedLetter?: string;
   activePlayerId?: string;
   currentTurnStartTime?: number;
   timeLimit: number;
@@ -24,27 +26,34 @@ interface Room {
 // Game state
 const rooms = new Map<string, Room>();
 
-// Generate random letters for the game board
-function generateRandomLetters(count = 12): string[] {
-  const vowels = 'AEIOU';
-  const consonants = 'BCDFGHJKLMNPQRSTVWXYZ';
-  const letters = [];
+// Generate letters for the game board based on the physical game
+function generateRandomLetters(): string[] {
+  // Letters from the physical game in clockwise order based on the latest image
+  const gameLetters = [
+    'S',
+    'B',
+    'C',
+    'O',
+    '*',
+    'T',
+    'M',
+    'K',
+    'D',
+    'N',
+    'F',
+    'I',
+    'E',
+    'H',
+    'A',
+    'G',
+    'P',
+    'R',
+    'L',
+    'J',
+  ];
 
-  // Ensure at least 1/3 vowels
-  const vowelCount = Math.ceil(count / 3);
-  for (let i = 0; i < vowelCount; i++) {
-    letters.push(vowels.charAt(Math.floor(Math.random() * vowels.length)));
-  }
-
-  // Fill the rest with consonants
-  for (let i = vowelCount; i < count; i++) {
-    letters.push(
-      consonants.charAt(Math.floor(Math.random() * consonants.length))
-    );
-  }
-
-  // Shuffle the array
-  return letters.sort(() => Math.random() - 0.5);
+  // Shuffle the array to randomize letter positions
+  return gameLetters.sort(() => Math.random() - 0.5);
 }
 
 // Sample themes
@@ -93,7 +102,8 @@ io.on('connection', (socket) => {
       id: roomId,
       players: [player],
       letters: generateRandomLetters(),
-      timeLimit: 15000, // 15 seconds in milliseconds
+      usedLetters: [],
+      timeLimit: 10000, // 10 seconds in milliseconds
     };
 
     rooms.set(roomId, room);
@@ -138,6 +148,8 @@ io.on('connection', (socket) => {
     // Pick random theme
     const theme = themes[Math.floor(Math.random() * themes.length)];
     room.currentTheme = theme;
+    room.usedLetters = []; // Reset used letters
+    room.selectedLetter = undefined;
 
     // Set first player randomly
     const firstPlayerId =
@@ -162,14 +174,69 @@ io.on('connection', (socket) => {
     }, room.timeLimit);
   });
 
-  // Player submitted a word
-  socket.on('submit-word', ({ roomId, word }) => {
+  // Player selects a letter
+  socket.on('select-letter', ({ roomId, letter }) => {
     const room = rooms.get(roomId);
     if (!room) return;
 
     // Check if it's this player's turn
     if (room.activePlayerId !== socket.id) {
       socket.emit('error', { message: 'Not your turn' });
+      return;
+    }
+
+    // Check if letter is available
+    if (room.usedLetters.includes(letter)) {
+      socket.emit('error', { message: 'Letter already used' });
+      return;
+    }
+
+    // Set the selected letter
+    room.selectedLetter = letter;
+
+    // Notify all players about the letter selection
+    io.to(roomId).emit('letter-selected', {
+      playerId: socket.id,
+      letter,
+    });
+  });
+
+  // Player passes turn after saying a word
+  socket.on('pass-turn', ({ roomId }) => {
+    const room = rooms.get(roomId);
+    if (!room) return;
+
+    // Check if it's this player's turn
+    if (room.activePlayerId !== socket.id) {
+      socket.emit('error', { message: 'Not your turn' });
+      return;
+    }
+
+    // Check if a letter was selected
+    if (!room.selectedLetter) {
+      socket.emit('error', { message: 'You must select a letter first' });
+      return;
+    }
+
+    // Add letter to used letters
+    room.usedLetters.push(room.selectedLetter);
+    const usedLetter = room.selectedLetter;
+    room.selectedLetter = undefined;
+
+    // Check if all letters have been used
+    if (room.usedLetters.length >= room.letters.length) {
+      // Current player loses if no more letters
+      io.to(roomId).emit('player-lost', { playerId: socket.id });
+
+      // Reset for next round
+      room.currentTheme = themes[Math.floor(Math.random() * themes.length)];
+      room.letters = generateRandomLetters();
+      room.usedLetters = [];
+
+      io.to(roomId).emit('new-round', {
+        theme: room.currentTheme,
+        letters: room.letters,
+      });
       return;
     }
 
@@ -186,7 +253,7 @@ io.on('connection', (socket) => {
     io.to(roomId).emit('turn-changed', {
       previousPlayerId: socket.id,
       activePlayerId: nextPlayerId,
-      submittedWord: word,
+      usedLetter,
     });
 
     // Set timeout for next turn
@@ -210,6 +277,8 @@ io.on('connection', (socket) => {
     // Get new theme and letters for the next round
     room.currentTheme = themes[Math.floor(Math.random() * themes.length)];
     room.letters = generateRandomLetters();
+    room.usedLetters = []; // Reset used letters
+    room.selectedLetter = undefined;
 
     io.to(roomId).emit('new-round', {
       theme: room.currentTheme,
