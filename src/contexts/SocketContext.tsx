@@ -15,7 +15,7 @@ interface SocketContextType {
   socket: Socket | null;
   createRoom: (playerName: string) => void;
   joinRoom: (roomId: string, playerName: string) => void;
-  startGame: (roomId: string) => void;
+  startGame: (roomId: string, theme?: string) => void;
   selectLetter: (roomId: string, letter: string) => void;
   passTurn: (roomId: string) => void;
   room: Room | null;
@@ -257,10 +257,12 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   );
 
   const startGame = useCallback(
-    (roomId: string) => {
+    (roomId: string, theme?: string) => {
       if (!socket) return;
-      addDebugMessage(`Starting game in room: ${roomId}`);
-      socket.emit('start-game', { roomId });
+      addDebugMessage(
+        `Starting game in room: ${roomId} with theme: ${theme || 'random'}`
+      );
+      socket.emit('start-game', { roomId, theme });
     },
     [socket, addDebugMessage]
   );

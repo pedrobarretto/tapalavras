@@ -8,6 +8,7 @@ import { ThemeCard } from '@/components/ThemeCard';
 import { PlayerList } from '@/components/PlayerList';
 import { TurnTimer } from '@/components/TurnTimer';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useSocket } from '@/contexts/SocketContext';
 
 export default function GameRoom() {
@@ -35,6 +36,7 @@ export default function GameRoom() {
 
   const [isReady, setIsReady] = useState(false);
   const hasJoinedRef = useRef(false);
+  const [customTheme, setCustomTheme] = useState('');
 
   useEffect(() => {
     if (!roomId || !playerName || !socket || hasJoinedRef.current) return;
@@ -53,7 +55,8 @@ export default function GameRoom() {
 
   const handleStartGame = () => {
     if (!room?.id) return;
-    startGame(room.id);
+    startGame(room.id, customTheme);
+    setCustomTheme(''); // Reset for next round
   };
 
   const handleLetterSelect = (letter: string) => {
@@ -147,17 +150,26 @@ export default function GameRoom() {
           </div>
 
           {player.isHost && (!room.currentTheme || isGameOver) && (
-            <Button
-              onClick={handleStartGame}
-              className="mt-4 sm:mt-0 bg-[#2c5ba7] text-[#fffffd] hover:bg-[#2c5ba7]/90"
-              disabled={room.players.length < 2}
-            >
-              {room.players.length < 2
-                ? 'Aguardando jogadores...'
-                : isGameOver
-                ? 'Iniciar Novo Jogo'
-                : 'Iniciar Jogo'}
-            </Button>
+            <div className="mt-4 sm:mt-0 flex flex-col sm:flex-row gap-2 sm:items-center">
+              <Input
+                type="text"
+                placeholder="Digite um tema..."
+                value={customTheme}
+                onChange={(e) => setCustomTheme(e.target.value)}
+                className="border-[#2c5ba7] max-w-xs"
+              />
+              <Button
+                onClick={handleStartGame}
+                className="bg-[#2c5ba7] text-[#fffffd] hover:bg-[#2c5ba7]/90"
+                disabled={room.players.length < 2}
+              >
+                {room.players.length < 2
+                  ? 'Aguardando jogadores...'
+                  : isGameOver
+                  ? 'Iniciar Novo Jogo'
+                  : 'Iniciar Jogo'}
+              </Button>
+            </div>
           )}
         </header>
 
@@ -268,12 +280,21 @@ export default function GameRoom() {
                 )}
 
                 {player.isHost && (
-                  <Button
-                    onClick={handleStartGame}
-                    className="mt-3 sm:mt-4 bg-[#fdc11d] text-[#1f2a28] hover:bg-[#fdc11d]/80"
-                  >
-                    Iniciar Novo Jogo
-                  </Button>
+                  <div className="mt-3 sm:mt-4 flex flex-col gap-2">
+                    <Input
+                      type="text"
+                      placeholder="Digite um tema..."
+                      value={customTheme}
+                      onChange={(e) => setCustomTheme(e.target.value)}
+                      className="border-[#fdc11d] bg-[#fffffd] max-w-xs mx-auto"
+                    />
+                    <Button
+                      onClick={handleStartGame}
+                      className="bg-[#fdc11d] text-[#1f2a28] hover:bg-[#fdc11d]/80"
+                    >
+                      Iniciar Novo Jogo
+                    </Button>
+                  </div>
                 )}
               </div>
             )}

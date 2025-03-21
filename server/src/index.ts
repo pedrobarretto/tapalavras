@@ -156,7 +156,7 @@ io.on('connection', (socket) => {
   });
 
   // Start the game
-  socket.on('start-game', ({ roomId }) => {
+  socket.on('start-game', ({ roomId, theme }) => {
     const room = rooms.get(roomId);
     if (!room) return;
 
@@ -169,9 +169,9 @@ io.on('connection', (socket) => {
       clearPlayerTimer(roomId, p.id);
     });
 
-    // Pick random theme
-    const theme = themes[Math.floor(Math.random() * themes.length)];
-    room.currentTheme = theme;
+    // Use the provided theme or fallback to a random one if none provided
+    room.currentTheme =
+      theme || themes[Math.floor(Math.random() * themes.length)];
     room.usedLetters = []; // Reset used letters
     room.selectedLetter = undefined;
     room.gameOver = false; // Reset game over state
@@ -184,7 +184,7 @@ io.on('connection', (socket) => {
     room.currentTurnStartTime = Date.now();
 
     io.to(roomId).emit('game-started', {
-      theme,
+      theme: room.currentTheme,
       activePlayerId: firstPlayerId,
       letters: room.letters,
     });
