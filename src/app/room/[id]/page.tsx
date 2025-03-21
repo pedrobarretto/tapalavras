@@ -16,6 +16,7 @@ export default function GameRoom() {
   const roomId = params.id as string;
   const playerName = searchParams.get('name') || '';
   const isHost = searchParams.get('host') === 'true';
+  const isDebugMode = searchParams.get('debug') === 'true';
 
   const {
     socket,
@@ -28,6 +29,8 @@ export default function GameRoom() {
     player,
     error,
     isLoading,
+    debugMessage,
+    clearDebugMessage,
   } = useSocket();
 
   const [isReady, setIsReady] = useState(false);
@@ -46,7 +49,7 @@ export default function GameRoom() {
     }
 
     setIsReady(true);
-  }, [roomId, playerName, socket, isHost]);
+  }, [roomId, playerName, socket, isHost, createRoom, joinRoom]);
 
   const handleStartGame = () => {
     if (!room?.id) return;
@@ -54,19 +57,20 @@ export default function GameRoom() {
   };
 
   const handleLetterSelect = (letter: string) => {
-    if (!room?.id || !isPlayersTurn) return;
+    if (!room?.id || !isPlayersTurn || isGameOver) return;
     selectLetter(room.id, letter);
   };
 
   const handlePassTurn = () => {
-    if (!room?.id || !isPlayersTurn || !room.selectedLetter) return;
+    if (!room?.id || !isPlayersTurn || !room.selectedLetter || isGameOver)
+      return;
     passTurn(room.id);
   };
 
   const isPlayersTurn = player?.id === room?.activePlayerId;
   const playerLost = room?.gameOver && room?.loser === player?.id;
   const isGameOver = room?.gameOver;
-  const noMoreLetters = room?.letters?.length === room?.usedLetters?.length;
+  const gameCompletedSuccessfully = isGameOver && !room?.loser;
 
   if (error) {
     return (
@@ -103,8 +107,33 @@ export default function GameRoom() {
     );
   }
 
+  const availableLettersCount = room.letters
+    ? room.letters.filter((letter) => !room.usedLetters.includes(letter)).length
+    : 0;
+
   return (
     <div className="min-h-screen bg-[#fffffd] p-4 sm:p-6">
+      {isDebugMode && debugMessage && (
+        <div className="fixed top-0 left-0 right-0 z-50 bg-black text-white p-2 text-xs">
+          <div>Debug: {debugMessage}</div>
+          <div>Game state: {isGameOver ? 'Over' : 'Active'}</div>
+          <div>Available letters: {availableLettersCount}</div>
+          <div>Used letters: {room.usedLetters.join(', ')}</div>
+          <div>Active player: {room.activePlayerId}</div>
+          <div>
+            You are: {player.id} {isPlayersTurn ? '(Your turn)' : ''}
+          </div>
+          <Button
+            onClick={clearDebugMessage}
+            size="sm"
+            variant="outline"
+            className="mt-1"
+          >
+            Clear
+          </Button>
+        </div>
+      )}
+
       <div className="max-w-6xl mx-auto">
         <header className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6">
           <div>
@@ -117,7 +146,7 @@ export default function GameRoom() {
             </div>
           </div>
 
-          {player.isHost && !room.currentTheme && (
+          {player.isHost && (!room.currentTheme || isGameOver) && (
             <Button
               onClick={handleStartGame}
               className="mt-4 sm:mt-0 bg-[#2c5ba7] text-[#fffffd] hover:bg-[#2c5ba7]/90"
@@ -125,6 +154,8 @@ export default function GameRoom() {
             >
               {room.players.length < 2
                 ? 'Aguardando jogadores...'
+                : isGameOver
+                ? 'Iniciar Novo Jogo'
                 : 'Iniciar Jogo'}
             </Button>
           )}
@@ -193,28 +224,46 @@ export default function GameRoom() {
             {isGameOver && (
               <div
                 className={`shadow-md rounded-lg p-3 sm:p-4 text-center ${
-                  playerLost ? 'bg-[#1f2a28]' : 'bg-[#2c5ba7]'
+                  playerLost
+                    ? 'bg-[#1f2a28]'
+                    : gameCompletedSuccessfully
+                    ? 'bg-green-600'
+                    : 'bg-[#2c5ba7]'
                 }`}
               >
                 {playerLost ? (
                   <p className="text-[#fdc11d] text-lg sm:text-xl font-bold">
                     Você perdeu o jogo!
                   </p>
+                ) : gameCompletedSuccessfully ? (
+                  <>
+                    <p className="text-[#fffffd] text-lg sm:text-xl font-bold">
+                      Parabéns! Jogo Completo!
+                    </p>
+                    <p className="text-[#fdc11d] mt-2">
+                      Todas as letras foram usadas com sucesso!
+                    </p>
+                  </>
                 ) : (
                   <>
                     <p className="text-[#fffffd] text-lg sm:text-xl font-bold">
                       Fim de Jogo!
                     </p>
                     <p className="text-[#fdc11d] mt-2">
-                      {noMoreLetters
-                        ? 'Não há mais letras disponíveis!'
-                        : 'O jogador esgotou o tempo!'}
+                      {room.loser
+                        ? `${
+                            room.players.find((p) => p.id === room.loser)
+                              ?.name || 'O jogador'
+                          } esgotou o tempo!`
+                        : 'O jogo terminou!'}
                     </p>
-                    <p className="text-[#fffffd] mt-2">
-                      {room.players.find((p) => p.id === room.loser)?.name ||
-                        'Alguém'}{' '}
-                      perdeu.
-                    </p>
+                    {room.loser && (
+                      <p className="text-[#fffffd] mt-2">
+                        {room.players.find((p) => p.id === room.loser)?.name ||
+                          'Alguém'}{' '}
+                        perdeu.
+                      </p>
+                    )}
                   </>
                 )}
 

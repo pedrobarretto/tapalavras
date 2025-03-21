@@ -21,10 +21,28 @@ interface Room {
   activePlayerId?: string;
   currentTurnStartTime?: number;
   timeLimit: number;
+  gameOver: boolean;
 }
 
 // Game state
 const rooms = new Map<string, Room>();
+// Track active timers by roomId and playerId
+const activeTimers = new Map<string, NodeJS.Timeout>();
+
+// Function to create a unique timer key
+function getTimerKey(roomId: string, playerId: string): string {
+  return `${roomId}:${playerId}`;
+}
+
+// Function to clear any existing timer for a player in a room
+function clearPlayerTimer(roomId: string, playerId: string): void {
+  const timerKey = getTimerKey(roomId, playerId);
+  if (activeTimers.has(timerKey)) {
+    clearTimeout(activeTimers.get(timerKey));
+    activeTimers.delete(timerKey);
+    console.log(`Cleared timer for player ${playerId} in room ${roomId}`);
+  }
+}
 
 // Generate letters for the game board based on the physical game
 function generateRandomLetters(): string[] {
@@ -104,6 +122,7 @@ io.on('connection', (socket) => {
       letters: generateRandomLetters(),
       usedLetters: [],
       timeLimit: 10000, // 10 seconds in milliseconds
+      gameOver: false,
     };
 
     rooms.set(roomId, room);
@@ -145,11 +164,18 @@ io.on('connection', (socket) => {
     const player = room.players.find((p) => p.id === socket.id);
     if (!player?.isHost) return;
 
+    // Clear any existing timers for this room
+    room.players.forEach((p) => {
+      clearPlayerTimer(roomId, p.id);
+    });
+
     // Pick random theme
     const theme = themes[Math.floor(Math.random() * themes.length)];
     room.currentTheme = theme;
     room.usedLetters = []; // Reset used letters
     room.selectedLetter = undefined;
+    room.gameOver = false; // Reset game over state
+    room.letters = generateRandomLetters(); // Generate new letters for a new game
 
     // Set first player randomly
     const firstPlayerId =
@@ -164,14 +190,22 @@ io.on('connection', (socket) => {
     });
 
     // Set timeout for turn
-    setTimeout(() => {
+    const timerKey = getTimerKey(roomId, firstPlayerId);
+    const timeoutId = setTimeout(() => {
       if (
         rooms.has(roomId) &&
-        rooms.get(roomId)?.activePlayerId === firstPlayerId
+        rooms.get(roomId)?.activePlayerId === firstPlayerId &&
+        !rooms.get(roomId)?.gameOver
       ) {
         endTurn(roomId, firstPlayerId);
       }
+      // Clean up the timer reference
+      activeTimers.delete(timerKey);
     }, room.timeLimit);
+
+    // Store the timer reference
+    activeTimers.set(timerKey, timeoutId);
+    console.log(`Started timer for player ${firstPlayerId} in room ${roomId}`);
   });
 
   // Player selects a letter
@@ -218,6 +252,9 @@ io.on('connection', (socket) => {
       return;
     }
 
+    // Clear this player's timer
+    clearPlayerTimer(roomId, socket.id);
+
     // Add letter to used letters
     room.usedLetters.push(room.selectedLetter);
     const usedLetter = room.selectedLetter;
@@ -225,17 +262,10 @@ io.on('connection', (socket) => {
 
     // Check if all letters have been used
     if (room.usedLetters.length >= room.letters.length) {
-      // Current player loses if no more letters
-      io.to(roomId).emit('player-lost', { playerId: socket.id });
-
-      // Reset for next round
-      room.currentTheme = themes[Math.floor(Math.random() * themes.length)];
-      room.letters = generateRandomLetters();
-      room.usedLetters = [];
-
-      io.to(roomId).emit('new-round', {
-        theme: room.currentTheme,
-        letters: room.letters,
+      // Game over - all letters used
+      room.gameOver = true;
+      io.to(roomId).emit('game-complete', {
+        allLettersUsed: true,
       });
       return;
     }
@@ -257,38 +287,47 @@ io.on('connection', (socket) => {
     });
 
     // Set timeout for next turn
-    setTimeout(() => {
+    const timerKey = getTimerKey(roomId, nextPlayerId);
+    const timeoutId = setTimeout(() => {
       if (
         rooms.has(roomId) &&
-        rooms.get(roomId)?.activePlayerId === nextPlayerId
+        rooms.get(roomId)?.activePlayerId === nextPlayerId &&
+        !rooms.get(roomId)?.gameOver
       ) {
         endTurn(roomId, nextPlayerId);
       }
+      // Clean up the timer reference
+      activeTimers.delete(timerKey);
     }, room.timeLimit);
+
+    // Store the timer reference
+    activeTimers.set(timerKey, timeoutId);
+    console.log(`Started timer for player ${nextPlayerId} in room ${roomId}`);
   });
 
   // Time's up for a player
   function endTurn(roomId: string, playerId: string) {
     const room = rooms.get(roomId);
-    if (!room || room.activePlayerId !== playerId) return;
+    if (!room || room.activePlayerId !== playerId || room.gameOver) return;
 
+    console.log(`Time's up for player ${playerId} in room ${roomId}`);
+
+    // Player loses if they run out of time
+    room.gameOver = true;
     io.to(roomId).emit('player-lost', { playerId });
 
-    // Get new theme and letters for the next round
-    room.currentTheme = themes[Math.floor(Math.random() * themes.length)];
-    room.letters = generateRandomLetters();
-    room.usedLetters = []; // Reset used letters
-    room.selectedLetter = undefined;
-
-    io.to(roomId).emit('new-round', {
-      theme: room.currentTheme,
-      letters: room.letters,
-    });
+    // Clean up any remaining timers
+    clearPlayerTimer(roomId, playerId);
   }
 
   // Player disconnects
   socket.on('disconnect', () => {
     console.log(`User disconnected: ${socket.id}`);
+
+    // Clear any timers for this player
+    rooms.forEach((room, roomId) => {
+      clearPlayerTimer(roomId, socket.id);
+    });
 
     // Find and remove player from any room they were in
     rooms.forEach((room, roomId) => {
@@ -298,11 +337,50 @@ io.on('connection', (socket) => {
         const player = room.players[playerIndex];
         room.players.splice(playerIndex, 1);
 
-        // If room is empty, remove it
+        // If room is empty, remove it and all its timers
         if (room.players.length === 0) {
+          // Clean up all timers for this room
+          room.players.forEach((p) => {
+            clearPlayerTimer(roomId, p.id);
+          });
           rooms.delete(roomId);
           console.log(`Room ${roomId} removed (empty)`);
           return;
+        }
+
+        // If active player left, move to next player
+        if (room.activePlayerId === socket.id && !room.gameOver) {
+          const nextPlayerIndex = playerIndex % room.players.length;
+          const nextPlayerId = room.players[nextPlayerIndex].id;
+
+          room.activePlayerId = nextPlayerId;
+          room.currentTurnStartTime = Date.now();
+          room.selectedLetter = undefined;
+
+          // Clear old timer and set new one
+          clearPlayerTimer(roomId, socket.id);
+
+          const timerKey = getTimerKey(roomId, nextPlayerId);
+          const timeoutId = setTimeout(() => {
+            if (
+              rooms.has(roomId) &&
+              rooms.get(roomId)?.activePlayerId === nextPlayerId &&
+              !rooms.get(roomId)?.gameOver
+            ) {
+              endTurn(roomId, nextPlayerId);
+            }
+            // Clean up the timer reference
+            activeTimers.delete(timerKey);
+          }, room.timeLimit);
+
+          // Store the timer reference
+          activeTimers.set(timerKey, timeoutId);
+
+          io.to(roomId).emit('turn-changed', {
+            previousPlayerId: socket.id,
+            activePlayerId: nextPlayerId,
+            usedLetter: '',
+          });
         }
 
         // If host left, assign new host
