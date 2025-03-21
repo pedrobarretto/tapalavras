@@ -55,6 +55,7 @@ export default function GameRoom() {
 
   const handleStartGame = () => {
     if (!room?.id) return;
+    if (!customTheme.trim()) return;
     startGame(room.id, customTheme);
     setCustomTheme(''); // Reset for next round
   };
@@ -151,20 +152,28 @@ export default function GameRoom() {
 
           {player.isHost && (!room.currentTheme || isGameOver) && (
             <div className="mt-4 sm:mt-0 flex flex-col sm:flex-row gap-2 sm:items-center">
-              <Input
-                type="text"
-                placeholder="Digite um tema..."
-                value={customTheme}
-                onChange={(e) => setCustomTheme(e.target.value)}
-                className="border-[#2c5ba7] max-w-xs"
-              />
+              <div className="flex flex-col gap-1">
+                <Input
+                  type="text"
+                  placeholder="Digite um tema..."
+                  value={customTheme}
+                  onChange={(e) => setCustomTheme(e.target.value)}
+                  className="border-[#2c5ba7] max-w-xs"
+                  required
+                />
+                <p className="text-xs text-[#2c5ba7] italic">
+                  Digite um tema para o jogo (ex: Filmes, Animais, Países)
+                </p>
+              </div>
               <Button
                 onClick={handleStartGame}
                 className="bg-[#2c5ba7] text-[#fffffd] hover:bg-[#2c5ba7]/90"
-                disabled={room.players.length < 2}
+                disabled={room.players.length < 2 || !customTheme.trim()}
               >
                 {room.players.length < 2
                   ? 'Aguardando jogadores...'
+                  : !customTheme.trim()
+                  ? 'Digite um tema'
                   : isGameOver
                   ? 'Iniciar Novo Jogo'
                   : 'Iniciar Jogo'}
@@ -281,18 +290,27 @@ export default function GameRoom() {
 
                 {player.isHost && (
                   <div className="mt-3 sm:mt-4 flex flex-col gap-2">
-                    <Input
-                      type="text"
-                      placeholder="Digite um tema..."
-                      value={customTheme}
-                      onChange={(e) => setCustomTheme(e.target.value)}
-                      className="border-[#fdc11d] bg-[#fffffd] max-w-xs mx-auto"
-                    />
+                    <div className="flex flex-col gap-1">
+                      <Input
+                        type="text"
+                        placeholder="Digite um tema..."
+                        value={customTheme}
+                        onChange={(e) => setCustomTheme(e.target.value)}
+                        className="border-[#fdc11d] bg-[#fffffd] max-w-xs mx-auto"
+                        required
+                      />
+                      <p className="text-xs text-[#fffffd] italic text-center">
+                        Digite um tema para o jogo (ex: Filmes, Animais, Países)
+                      </p>
+                    </div>
                     <Button
                       onClick={handleStartGame}
                       className="bg-[#fdc11d] text-[#1f2a28] hover:bg-[#fdc11d]/80"
+                      disabled={!customTheme.trim()}
                     >
-                      Iniciar Novo Jogo
+                      {!customTheme.trim()
+                        ? 'Digite um tema'
+                        : 'Iniciar Novo Jogo'}
                     </Button>
                   </div>
                 )}

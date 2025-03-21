@@ -74,24 +74,6 @@ function generateRandomLetters(): string[] {
   return gameLetters.sort(() => Math.random() - 0.5);
 }
 
-// Sample themes
-const themes = [
-  'Animals',
-  'Countries',
-  'Food',
-  'Sports',
-  'Movies',
-  'Professions',
-  'Body Parts',
-  'Clothing',
-  'Transportation',
-  'Music',
-  'Colors',
-  'School Subjects',
-  'Plants',
-  'Technology',
-];
-
 // Initialize Express app and Socket.IO
 const app = express();
 app.use(cors());
@@ -164,14 +146,20 @@ io.on('connection', (socket) => {
     const player = room.players.find((p) => p.id === socket.id);
     if (!player?.isHost) return;
 
+    // Require a theme now
+    if (!theme) {
+      socket.emit('error', {
+        message: 'A theme is required to start the game',
+      });
+      return;
+    }
+
     // Clear any existing timers for this room
     room.players.forEach((p) => {
       clearPlayerTimer(roomId, p.id);
     });
 
-    // Use the provided theme or fallback to a random one if none provided
-    room.currentTheme =
-      theme || themes[Math.floor(Math.random() * themes.length)];
+    room.currentTheme = theme;
     room.usedLetters = []; // Reset used letters
     room.selectedLetter = undefined;
     room.gameOver = false; // Reset game over state
