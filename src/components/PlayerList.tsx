@@ -15,7 +15,7 @@ export function PlayerList({
   loserId,
 }: PlayerListProps) {
   return (
-    <div className="w-full max-w-sm mx-auto bg-[#fffffd] shadow-md rounded-lg overflow-hidden mb-4">
+    <div className="w-full max-w-sm mx-auto md:max-w-none bg-[#fffffd] shadow-md rounded-lg overflow-hidden mb-4">
       <div className="px-4 py-2 bg-[#2c5ba7] text-[#fffffd]">
         <h3 className="text-md sm:text-lg font-semibold">Jogadores</h3>
       </div>
@@ -28,7 +28,7 @@ export function PlayerList({
           return (
             <li
               key={player.id}
-              className={`px-3 sm:px-4 py-2 sm:py-3 flex items-center ${
+              className={`px-3 sm:px-4 py-2 sm:py-3 md:py-4 flex items-center ${
                 isActive ? 'bg-[#fdc11d]/20' : ''
               } ${isLoser ? 'bg-[#1f2a28]/20' : ''}`}
             >
@@ -49,18 +49,18 @@ export function PlayerList({
                   </span>
                 )}
                 {isCurrentPlayer && (
-                  <span className="ml-1 sm:ml-2 text-xs text-[#2c5ba7] font-bold">
+                  <span className="ml-1 sm:ml-2 text-xs sm:text-sm text-[#2c5ba7] font-bold">
                     (Você)
                   </span>
                 )}
               </span>
               {isActive && !isLoser && (
-                <span className="text-xs font-medium text-[#fdc11d] bg-[#1f2a28] px-2 py-1 rounded-full">
+                <span className="text-xs sm:text-sm font-medium text-[#fdc11d] bg-[#1f2a28] px-2 py-1 rounded-full">
                   Sua Vez
                 </span>
               )}
               {isLoser && (
-                <span className="text-xs font-medium text-[#fdc11d] bg-[#1f2a28] px-2 py-1 rounded-full">
+                <span className="text-xs sm:text-sm font-medium text-[#fdc11d] bg-[#1f2a28] px-2 py-1 rounded-full">
                   Perdeu
                 </span>
               )}

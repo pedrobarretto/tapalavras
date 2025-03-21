@@ -30,18 +30,18 @@ export function TurnTimer({ startTime, timeLimit, isActive }: TurnTimerProps) {
   const percent = (timeLeft / timeLimit) * 100;
 
   return (
-    <div className="w-full max-w-sm mx-auto my-2 sm:my-4">
-      <div className="flex justify-between items-center mb-1">
-        <span className="text-xs sm:text-sm font-medium text-[#1f2a28]">
+    <div className="w-full max-w-sm mx-auto md:max-w-none my-2 sm:my-4">
+      <div className="flex justify-between items-center mb-1 md:mb-2">
+        <span className="text-xs sm:text-sm md:text-base font-medium text-[#1f2a28]">
           Tempo restante
         </span>
-        <span className="text-xs sm:text-sm font-medium text-[#1f2a28]">
+        <span className="text-xs sm:text-sm md:text-base font-medium text-[#1f2a28]">
           {seconds}s
         </span>
       </div>
-      <div className="w-full bg-[#2c5ba7]/20 rounded-full h-2 sm:h-2.5">
+      <div className="w-full bg-[#2c5ba7]/20 rounded-full h-2 sm:h-2.5 md:h-3">
         <div
-          className={`h-2 sm:h-2.5 rounded-full ${
+          className={`h-2 sm:h-2.5 md:h-3 rounded-full ${
             percent < 30 ? 'bg-[#1f2a28]' : 'bg-[#fdc11d]'
           }`}
           style={{ width: `${percent}%` }}

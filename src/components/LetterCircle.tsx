@@ -33,14 +33,21 @@ export function LetterCircle({
       let newSize;
 
       if (screenWidth < 400) {
+        // Mobile small
         newSize = { width: screenWidth - 40, height: screenWidth - 40 };
         setResponsiveRadius(Math.min(newSize.width, newSize.height) / 2 - 20);
       } else if (screenWidth < 768) {
+        // Mobile large
         newSize = { width: 360, height: 360 };
         setResponsiveRadius(160);
-      } else {
+      } else if (screenWidth < 1024) {
+        // Tablet
         newSize = { width: 400, height: 400 };
         setResponsiveRadius(180);
+      } else {
+        // Desktop
+        newSize = { width: 500, height: 500 };
+        setResponsiveRadius(220);
       }
 
       setContainerSize(newSize);
@@ -65,7 +72,8 @@ export function LetterCircle({
   };
 
   // Calculate tile size based on responsive radius
-  const tileSize = Math.max(Math.min(responsiveRadius * 0.32, 52), 32); // Min 32px, max 52px
+  const tileSize = Math.max(Math.min(responsiveRadius * 0.32, 60), 32); // Min 32px, max 60px
+  const handIconSize = Math.max(responsiveRadius * 0.15, 24); // Scale hand icon size
 
   return (
     <div
@@ -116,7 +124,7 @@ export function LetterCircle({
         >
           {selectedLetter && (
             <span className="text-[#1f2a28] font-bold">
-              <Hand />
+              <Hand size={handIconSize} />
             </span>
           )}
         </div>
@@ -164,7 +172,7 @@ export function LetterCircle({
               transform: `translate(-50%, -50%) rotate(${
                 angle + Math.PI / 2
               }rad)`,
-              borderRadius: '4px',
+              borderRadius: '6px',
             }}
           >
             <span style={{ transform: `rotate(${-(angle + Math.PI / 2)}rad)` }}>

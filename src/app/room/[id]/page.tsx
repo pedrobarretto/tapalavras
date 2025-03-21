@@ -105,7 +105,7 @@ export default function GameRoom() {
 
   return (
     <div className="min-h-screen bg-[#fffffd] p-4 sm:p-6">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <header className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-[#1f2a28]">
@@ -130,9 +130,9 @@ export default function GameRoom() {
           )}
         </header>
 
-        <div className="flex flex-col items-center">
-          {/* Game circle is central */}
-          <div className="mb-8 mt-4 flex justify-center">
+        <div className="flex flex-col md:flex-row md:items-start md:gap-8">
+          {/* Game circle on left for desktop, centered for mobile */}
+          <div className="mb-8 mt-4 md:mt-0 flex justify-center md:justify-start md:flex-shrink-0 md:w-1/2">
             {room.letters && room.letters.length > 0 ? (
               <LetterCircle
                 letters={room.letters}
@@ -141,9 +141,10 @@ export default function GameRoom() {
                 selectedLetter={room.selectedLetter || null}
                 onLetterSelect={handleLetterSelect}
                 onPassTurn={handlePassTurn}
+                radius={180}
               />
             ) : (
-              <div className="bg-[#fdc11d] rounded-full w-[300px] h-[300px] sm:w-[340px] sm:h-[340px] md:w-[380px] md:h-[380px] flex items-center justify-center text-[#1f2a28] font-semibold">
+              <div className="bg-[#fdc11d] rounded-full w-[300px] h-[300px] sm:w-[340px] sm:h-[340px] md:w-[400px] md:h-[400px] flex items-center justify-center text-[#1f2a28] font-semibold">
                 <p className="text-center px-4">
                   Aguardando o início do jogo...
                 </p>
@@ -151,7 +152,8 @@ export default function GameRoom() {
             )}
           </div>
 
-          <div className="w-full max-w-lg mx-auto grid grid-cols-1 gap-4 sm:gap-6">
+          {/* Game info on right for desktop, below for mobile */}
+          <div className="w-full md:w-1/2 max-w-lg md:max-w-none mx-auto grid grid-cols-1 gap-4 sm:gap-6">
             {room.currentTheme && <ThemeCard theme={room.currentTheme} />}
 
             <PlayerList
