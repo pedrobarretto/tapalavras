@@ -33,7 +33,7 @@ export function TurnTimer({ startTime, timeLimit, isActive }: TurnTimerProps) {
     <div className="w-full max-w-sm mx-auto my-2 sm:my-4">
       <div className="flex justify-between items-center mb-1">
         <span className="text-xs sm:text-sm font-medium text-[#1f2a28]">
-          Time left
+          Tempo restante
         </span>
         <span className="text-xs sm:text-sm font-medium text-[#1f2a28]">
           {seconds}s

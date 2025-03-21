@@ -28,7 +28,7 @@ export default function Home() {
           TapaPalavras
         </h1>
         <p className="text-xl text-gray-600">
-          A fun word game to play with friends!
+          Aquele joguinho famoso do TikTok, mas aqui você joga online!
         </p>
       </div>
 
@@ -39,14 +39,14 @@ export default function Home() {
               htmlFor="name"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Your Name
+              Nome no jogo
             </label>
             <Input
               id="name"
               type="text"
               value={playerName}
               onChange={(e) => setPlayerName(e.target.value)}
-              placeholder="Enter your name"
+              placeholder="Digite seu nome"
               className="w-full"
             />
           </div>
@@ -58,14 +58,14 @@ export default function Home() {
                   htmlFor="roomId"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  Room Code
+                  Código da Sala
                 </label>
                 <Input
                   id="roomId"
                   type="text"
                   value={joinRoomId}
                   onChange={(e) => setJoinRoomId(e.target.value.toUpperCase())}
-                  placeholder="Enter room code"
+                  placeholder="Digite o código da sala"
                   className="w-full"
                   maxLength={6}
                 />
@@ -82,7 +82,7 @@ export default function Home() {
                       playerName
                     )}`}
                   >
-                    Join Room
+                    Entrar na Sala
                   </Link>
                 </Button>
                 <Button
@@ -90,7 +90,7 @@ export default function Home() {
                   className="w-full"
                   onClick={() => setShowJoinForm(false)}
                 >
-                  Back
+                  Voltar
                 </Button>
               </div>
             </>
@@ -101,7 +101,7 @@ export default function Home() {
                 disabled={!playerName}
                 className="w-full"
               >
-                Create Room
+                Criar Sala
               </Button>
 
               <Button
@@ -109,7 +109,7 @@ export default function Home() {
                 className="w-full"
                 onClick={() => setShowJoinForm(true)}
               >
-                Join Existing Room
+                Entrar em Sala Existente
               </Button>
             </div>
           )}
@@ -117,7 +117,7 @@ export default function Home() {
       </div>
 
       <div className="mt-8 text-center text-sm text-gray-500">
-        <p>Share the room code with friends to play together!</p>
+        <p>Compartilhe o código da sala com amigos para jogar juntos!</p>
       </div>
     </main>
   );

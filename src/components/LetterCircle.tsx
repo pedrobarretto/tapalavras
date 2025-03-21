@@ -1,3 +1,4 @@
+import { Hand } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
 interface LetterCircleProps {
@@ -114,7 +115,9 @@ export function LetterCircle({
           }}
         >
           {selectedLetter && (
-            <span className="text-[#1f2a28] font-bold">GO</span>
+            <span className="text-[#1f2a28] font-bold">
+              <Hand />
+            </span>
           )}
         </div>
       </div>

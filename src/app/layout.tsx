@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'TapaPalavras - Word Game',
-  description: 'A multiplayer word game to play with friends',
+  title: 'TapaPalavras - Jogo de Palavras',
+  description: 'Um jogo de palavras multiplayer para jogar com amigos',
 };
 
 export default function RootLayout({
@@ -24,7 +24,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="pt-BR">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

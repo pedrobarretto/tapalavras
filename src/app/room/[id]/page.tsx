@@ -72,11 +72,11 @@ export default function GameRoom() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6">
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg max-w-md w-full">
-          <p className="font-bold">Error</p>
+          <p className="font-bold">Erro</p>
           <p>{error}</p>
         </div>
         <Button className="mt-4" asChild>
-          <Link href="/">Go Back Home</Link>
+          <Link href="/">Voltar para o Início</Link>
         </Button>
       </div>
     );
@@ -85,7 +85,7 @@ export default function GameRoom() {
   if (isLoading || !isReady) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6">
-        <p className="text-xl text-gray-600">Loading...</p>
+        <p className="text-xl text-gray-600">Carregando...</p>
       </div>
     );
   }
@@ -94,10 +94,10 @@ export default function GameRoom() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6">
         <p className="text-xl text-gray-600">
-          Room not found or connection error.
+          Sala não encontrada ou erro de conexão.
         </p>
         <Button className="mt-4" asChild>
-          <Link href="/">Go Back Home</Link>
+          <Link href="/">Voltar para o Início</Link>
         </Button>
       </div>
     );
@@ -112,7 +112,7 @@ export default function GameRoom() {
               TapaPalavras
             </h1>
             <div className="bg-[#2c5ba7] px-3 py-1 rounded-md shadow-sm mt-2 inline-block">
-              <span className="text-[#fffffd] mr-2">Room Code:</span>
+              <span className="text-[#fffffd] mr-2">Código da Sala:</span>
               <span className="font-bold text-[#fdc11d]">{room.id}</span>
             </div>
           </div>
@@ -124,8 +124,8 @@ export default function GameRoom() {
               disabled={room.players.length < 2}
             >
               {room.players.length < 2
-                ? 'Waiting for players...'
-                : 'Start Game'}
+                ? 'Aguardando jogadores...'
+                : 'Iniciar Jogo'}
             </Button>
           )}
         </header>
@@ -144,7 +144,9 @@ export default function GameRoom() {
               />
             ) : (
               <div className="bg-[#fdc11d] rounded-full w-[300px] h-[300px] sm:w-[340px] sm:h-[340px] md:w-[380px] md:h-[380px] flex items-center justify-center text-[#1f2a28] font-semibold">
-                <p className="text-center px-4">Waiting for game to start...</p>
+                <p className="text-center px-4">
+                  Aguardando o início do jogo...
+                </p>
               </div>
             )}
           </div>
@@ -174,11 +176,11 @@ export default function GameRoom() {
                     <div className="mt-3 sm:mt-4 bg-[#1f2a28] p-2 sm:p-3 rounded-md text-center">
                       {!room.selectedLetter ? (
                         <p className="text-[#fdc11d] font-bold text-sm sm:text-base">
-                          Choose a letter!
+                          Escolha uma letra!
                         </p>
                       ) : (
                         <p className="text-[#fdc11d] font-bold text-sm sm:text-base">
-                          Say a word and click the center button!
+                          Diga uma palavra e clique no botão central!
                         </p>
                       )}
                     </div>
@@ -194,22 +196,22 @@ export default function GameRoom() {
               >
                 {playerLost ? (
                   <p className="text-[#fdc11d] text-lg sm:text-xl font-bold">
-                    You lost the game!
+                    Você perdeu o jogo!
                   </p>
                 ) : (
                   <>
                     <p className="text-[#fffffd] text-lg sm:text-xl font-bold">
-                      Game Over!
+                      Fim de Jogo!
                     </p>
                     <p className="text-[#fdc11d] mt-2">
                       {noMoreLetters
-                        ? 'No more letters available!'
-                        : 'Player ran out of time!'}
+                        ? 'Não há mais letras disponíveis!'
+                        : 'O jogador esgotou o tempo!'}
                     </p>
                     <p className="text-[#fffffd] mt-2">
                       {room.players.find((p) => p.id === room.loser)?.name ||
-                        'Someone'}{' '}
-                      lost.
+                        'Alguém'}{' '}
+                      perdeu.
                     </p>
                   </>
                 )}
@@ -219,7 +221,7 @@ export default function GameRoom() {
                     onClick={handleStartGame}
                     className="mt-3 sm:mt-4 bg-[#fdc11d] text-[#1f2a28] hover:bg-[#fdc11d]/80"
                   >
-                    Start New Game
+                    Iniciar Novo Jogo
                   </Button>
                 )}
               </div>

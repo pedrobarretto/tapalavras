@@ -25,7 +25,7 @@ export function WordInput({ onSubmit, isActive }: WordInputProps) {
   if (!isActive) {
     return (
       <div className="w-full max-w-sm mx-auto p-4 bg-[#2c5ba7]/10 rounded-lg border border-[#2c5ba7]/20 mt-4">
-        <p className="text-center text-[#1f2a28]">Wait for your turn...</p>
+        <p className="text-center text-[#1f2a28]">Aguarde sua vez...</p>
       </div>
     );
   }
@@ -37,7 +37,7 @@ export function WordInput({ onSubmit, isActive }: WordInputProps) {
           type="text"
           value={word}
           onChange={handleChange}
-          placeholder="Enter a word..."
+          placeholder="Digite uma palavra..."
           autoFocus
           className="flex-1 border-[#2c5ba7] focus-visible:ring-[#fdc11d]"
         />
@@ -45,11 +45,11 @@ export function WordInput({ onSubmit, isActive }: WordInputProps) {
           type="submit"
           className="bg-[#2c5ba7] text-[#fffffd] hover:bg-[#2c5ba7]/90"
         >
-          Submit
+          Enviar
         </Button>
       </div>
       <p className="text-center mt-2 text-sm font-semibold text-[#fdc11d] bg-[#1f2a28] py-1 px-2 rounded-md">
-        Your turn! Enter a word using the letters above.
+        Sua vez! Digite uma palavra usando as letras acima.
       </p>
     </form>
   );
